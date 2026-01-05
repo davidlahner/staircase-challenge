@@ -1,0 +1,23 @@
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PHP
+composer.phar
+vendor/
+
+# Logs
+*.log
+error_log
+
+# Temporary files
+*.tmp
+*.bak
+

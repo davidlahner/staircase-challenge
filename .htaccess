@@ -1,0 +1,50 @@
+# Apache Configuration (.htaccess)
+# Place this file in the same directory as index.php
+
+# Enable rewrite engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Redirect to index.php if directory is accessed
+    DirectoryIndex index.php
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Set default charset
+AddDefaultCharset UTF-8
+
+# Enable error display (disable in production)
+php_flag display_errors Off
+php_flag display_startup_errors Off
+
+# Set memory limit
+php_value memory_limit 128M
+
+# Set max execution time
+php_value max_execution_time 30
+
+# Enable file_get_contents for URLs
+php_flag allow_url_fopen On
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Compress output
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript
+</IfModule>
+
+# Cache static files
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
