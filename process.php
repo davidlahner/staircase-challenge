@@ -174,6 +174,13 @@ function aggregatePlays($xml) {
     $skippedCount = 0;
 
     foreach ($xml->play as $play) {
+        // Check if play is incomplete - skip if incomplete != 0
+        $incomplete = (string)$play['incomplete'];
+        if ($incomplete !== '0') {
+            $skippedCount++;
+            continue;
+        }
+
         if (isset($play->item)) {
             $item = $play->item;
             $objectId = (string)$item['objectid'];
