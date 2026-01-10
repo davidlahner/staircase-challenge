@@ -144,6 +144,11 @@ h1 {
     cursor: pointer;
     transition: all 0.3s ease;
     margin-top: 10px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 .submit-btn:hover {
@@ -153,6 +158,51 @@ h1 {
 
 .submit-btn:active {
     transform: translateY(0);
+}
+
+.submit-btn:disabled {
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    opacity: 0.8;
+}
+
+.loading-spinner {
+    display: none;
+    align-items: center;
+    gap: 10px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+.path {
+    stroke-dasharray: 31.416;
+    stroke-dashoffset: 31.416;
+    animation: dash 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 0 31.416;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 15.708 15.708;
+        stroke-dashoffset: -15.708;
+    }
+    100% {
+        stroke-dasharray: 0 31.416;
+        stroke-dashoffset: -31.416;
+    }
 }
 
 @media (max-width: 640px) {
