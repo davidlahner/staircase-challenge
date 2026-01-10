@@ -4,13 +4,16 @@ A PHP web application that generates BBCode for BoardGameGeek staircase challeng
 
 ## Features
 
-- Fetches play data from BoardGameGeek XML API
+- Fetches play data from BoardGameGeek XML API (with pagination)
 - Implements staircase logic (games with increasing play counts)
+- Skips incomplete plays (where `incomplete != 0`)
+- Lets you choose your own emoji or BBCode for the staircase (default: 🎲)
 - Generates formatted BBCode output
 - Handles duplicate play counts alphabetically
 - Error handling for invalid usernames
 - Responsive web design
 - One-click copy to clipboard
+- Loading spinner while generating staircase
 
 ## Files
 
@@ -35,17 +38,20 @@ A PHP web application that generates BBCode for BoardGameGeek staircase challeng
 
 1. Enter your BoardGameGeek username
 2. Select date range (from and to dates in yyyy-mm-dd format)
-3. Click "Generate Staircase Challenge"
-4. Copy the generated BBCode
+3. Enter your preferred emoji or BBCode for the staircase (default: 🎲)
+4. Click "Generate Staircase Challenge"
+5. Wait for the loading spinner to finish
+6. Copy the generated BBCode
 
 ## Staircase Logic
 
 The staircase algorithm works as follows:
 
-1. Fetches all plays for the user in the specified date range
-2. Aggregates plays by game (counting total plays per game)
-3. Sorts games by play count (descending), then alphabetically (ascending)
-4. For each step (1, 2, 3, 4...):
+1. Fetches all plays for the user in the specified date range (fetches all pages)
+2. Skips any play where the `incomplete` attribute is not 0
+3. Aggregates plays by game (counting total plays per game)
+4. Sorts games by play count (ascending), then alphabetically (ascending)
+5. For each step (1, 2, 3, 4...):
    - Finds the first unused game with at least that many plays
    - Adds it to the staircase
    - If no game has enough plays, stops the staircase
@@ -60,7 +66,7 @@ The staircase algorithm works as follows:
 ```
 
 - Step number (zero-padded)
-- Dice emoji repeated by step count
+- Your chosen emoji or BBCode repeated by step count
 - BBCode thing tag with game ID
 - Play count in parentheses
 
@@ -92,8 +98,8 @@ Parameters:
 - `username` - BGG username
 - `mindate` - Start date (yyyy-mm-dd)
 - `maxdate` - End date (yyyy-mm-dd)
+- `page` - Page number (pagination)
 
 ## License
 
 Free to use and modify.
-
