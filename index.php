@@ -21,6 +21,7 @@
             <div class="success-message">
                 <h2>Your Staircase Challenge BBCode:</h2>
                 <div class="bbcode-output">
+                    <label for="bbcode-result" style="font-weight: bold; display: block; margin-bottom: 5px;">Generated BBCode:</label>
                     <textarea id="bbcode-result" readonly><?php echo htmlspecialchars($_GET['bbcode']); ?></textarea>
                     <button onclick="copyToClipboard()" class="copy-btn">Copy to Clipboard</button>
                 </div>
