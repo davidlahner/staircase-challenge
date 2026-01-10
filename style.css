@@ -167,6 +167,13 @@ h1 {
     opacity: 0.8;
 }
 
+.logo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .loading-spinner {
     display: none;
     align-items: center;

@@ -60,7 +60,7 @@
                 </span>
             </button>
         </form>
-        <a href="https://boardgamegeek.com/" target="_blank"><img src="powered_by_bgg_logo.jpg" alt="Powered by BoardGameGeek"/></a>
+        <div class="logo"><a href="https://boardgamegeek.com/" target="_blank"><img src="powered_by_bgg_logo.jpg" alt="Powered by BoardGameGeek"/></a></div>
     </div>
 
     <script>
