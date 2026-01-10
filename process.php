@@ -10,6 +10,9 @@ $fromDate = $_POST['from_date'] ?? '';
 $toDate = $_POST['to_date'] ?? '';
 $authorizationToken = 'your_api_token_here'; // Replace with your actual token
 
+// Get emoji from POST, default to 🎲
+$emoji = isset($_POST['emoji']) && $_POST['emoji'] !== '' ? $_POST['emoji'] : '🎲';
+
     // Validate inputs for API mode
     if (empty($username) || empty($fromDate) || empty($toDate)) {
         redirectWithError('All fields are required.');
@@ -143,7 +146,7 @@ if (empty($staircase)) {
 }
 
 // Generate BBCode
-$bbcode = generateBBCode($staircase);
+$bbcode = generateBBCode($staircase, $emoji);
 
 // Redirect back with success and BBCode
 redirectWithSuccess($bbcode, $username, $fromDate, $toDate);
@@ -267,12 +270,12 @@ function generateStaircase($games) {
 /**
  * Generate BBCode from staircase
  */
-function generateBBCode($staircase) {
+function generateBBCode($staircase, $emoji) {
     $lines = [];
 
     foreach ($staircase as $entry) {
         $stepNum = str_pad($entry['step'], 2, '0', STR_PAD_LEFT);
-        $dice = str_repeat('🎲', $entry['step']);
+        $dice = str_repeat($emoji, $entry['step']);
         $thing = "[thing={$entry['id']}][/thing]";
         $plays = "({$entry['plays']})";
 
@@ -318,4 +321,3 @@ function redirectWithSuccess($bbcode, $username, $fromDate, $toDate) {
     header('Location: index.php?' . http_build_query($params));
     exit;
 }
-

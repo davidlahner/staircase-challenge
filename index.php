@@ -47,6 +47,12 @@
                        value="<?php echo isset($_GET['to']) ? htmlspecialchars($_GET['to']) : ''; ?>">
             </div>
 
+            <div class="form-group">
+                <label for="emoji">Staircase Emoji or BBCode:</label>
+                <input type="text" id="emoji" name="emoji" required
+                       value="<?php echo isset($_GET['emoji']) ? htmlspecialchars($_GET['emoji']) : '🎲'; ?>">
+            </div>
+
             <button type="submit" class="submit-btn" id="submit-btn">
                 <span class="btn-text">Generate Staircase Challenge</span>
                 <span class="loading-spinner" style="display: none;">
