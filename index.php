@@ -9,7 +9,8 @@
 <body>
     <div class="container">
         <h1>🎲 BoardGameGeek Staircase Challenge</h1>
-        <p class="description">Generate BBCode for your staircase challenge based on your BoardGameGeek play history.</p>
+        <p class="description">Generate BBCode for your staircase challenge based on your BoardGameGeek play history.<br/>
+            Created by <a href="https://boardgamegeek.com/profile/pratchettfan" target="_blank">Pratchettfan</a></p>
 
         <?php if (isset($_GET['error'])): ?>
             <div class="error-message">
