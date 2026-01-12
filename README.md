@@ -100,6 +100,15 @@ Parameters:
 - `maxdate` - End date (yyyy-mm-dd)
 - `page` - Page number (pagination)
 
+## Implementation Notes (2026 Update)
+
+- **API Pagination**: The app fetches all pages of plays from BoardGameGeek using the `page` parameter, combining results until no more plays are returned.
+- **Authorization**: API requests include an `Authorization: Bearer` header for authentication.
+- **Emoji Input**: The form allows you to specify an emoji or BBCode for the staircase. The default is 🎲.
+- **Incomplete Plays**: Plays with `incomplete != 0` are ignored and not counted toward the staircase.
+- **Loading Spinner**: A loading spinner is shown while the staircase is being generated.
+- **Code Structure**: The logic for fetching all pages from the API is encapsulated in the `fetchAllPlaysXml` function in `process.php`.
+
 ## License
 
 Free to use and modify.

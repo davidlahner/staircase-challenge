@@ -13,17 +13,21 @@ $authorizationToken = 'your_api_token_here'; // Replace with your actual token
 // Get emoji from POST, default to 🎲
 $emoji = isset($_POST['emoji']) && $_POST['emoji'] !== '' ? $_POST['emoji'] : '🎲';
 
-    // Validate inputs for API mode
-    if (empty($username) || empty($fromDate) || empty($toDate)) {
-        redirectWithError('All fields are required.');
-    }
+// Validate inputs for API mode
+if (empty($username) || empty($fromDate) || empty($toDate)) {
+    redirectWithError('All fields are required.');
+}
 
-    // Validate date format
-    if (!validateDate($fromDate) || !validateDate($toDate)) {
-        redirectWithError('Invalid date format. Please use yyyy-mm-dd.');
-    }
+// Validate date format
+if (!validateDate($fromDate) || !validateDate($toDate)) {
+    redirectWithError('Invalid date format. Please use yyyy-mm-dd.');
+}
 
-    // Create context with authorization headers
+/**
+ * Fetch all pages of plays from BoardGameGeek API for a user and date range
+ * Returns the combined XML content as a string
+ */
+function fetchAllPlaysXml($username, $fromDate, $toDate, $subtype, $authorizationToken) {
     $context = stream_context_create([
         'http' => [
             'method' => 'GET',
@@ -35,83 +39,87 @@ $emoji = isset($_POST['emoji']) && $_POST['emoji'] !== '' ? $_POST['emoji'] : '�
         ]
     ]);
 
-    // Fetch all pages from BoardGameGeek API
     $allXmlContent = '';
     $currentPage = 1;
     $hasMorePages = true;
     $totalPlays = 0;
 
     while ($hasMorePages) {
-        // Build API URL for current page
         $apiUrl = "https://boardgamegeek.com/xmlapi2/plays?username=" . urlencode($username)
             . "&mindate=" . urlencode($fromDate)
             . "&maxdate=" . urlencode($toDate)
+            . "&subtype=" . urlencode($subtype)
             . "&page=" . urlencode($currentPage);
 
-        // Fetch XML with error handling and authorization
         $xmlContent = @file_get_contents($apiUrl, false, $context);
-
         if ($xmlContent === false) {
             redirectWithError('Failed to connect to BoardGameGeek API. Please try again later.');
         }
 
-        // Parse XML to check if there are plays on this page
         libxml_use_internal_errors(true);
         $pageXml = simplexml_load_string($xmlContent);
-
         if ($pageXml === false) {
             redirectWithError('Failed to parse API response. Please check your username and try again.');
         }
-
-        // Check if username exists (API returns empty plays element for non-existent users)
         if (!isset($pageXml['username'])) {
             redirectWithError('Username not found. Please check the username and try again.');
         }
-
-        // Check if this page has any plays
         if (!isset($pageXml->play) || count($pageXml->play) === 0) {
             $hasMorePages = false;
         } else {
-            // If this is the first page, start building the combined XML
             if ($currentPage === 1) {
                 $allXmlContent = $xmlContent;
                 $totalPlays = count($pageXml->play);
             } else {
-                // For subsequent pages, extract just the play elements and append them
                 $mainXml = simplexml_load_string($allXmlContent);
                 foreach ($pageXml->play as $play) {
-                    // Create a new play element in the main XML
                     $newPlay = $mainXml->addChild('play');
-
-                    // Copy all attributes
                     foreach ($play->attributes() as $key => $value) {
                         $newPlay->addAttribute($key, $value);
                     }
-
-                    // Copy all child elements
                     foreach ($play->children() as $child) {
                         copyXmlNode($child, $newPlay);
                     }
-
                     $totalPlays++;
                 }
                 $allXmlContent = $mainXml->asXML();
             }
-
             $currentPage++;
         }
-
-        // Add a small delay to be respectful to the API
         usleep(500000); // 0.5 second delay
     }
+    return $allXmlContent;
+}
 
-    // Use the combined XML content
-    $xmlContent = $allXmlContent;
+// Fetch all pages from BoardGameGeek API for boardgames
+$xmlContent = fetchAllPlaysXml($username, $fromDate, $toDate, 'boardgame', $authorizationToken);
 
-    if ($totalPlays === 0) {
-        redirectWithError('No plays found for the specified date range.');
+// Fetch all pages for boardgameexpansion and add to $xmlContent
+$expansionXmlContent = fetchAllPlaysXml($username, $fromDate, $toDate, 'boardgameexpansion', $authorizationToken);
+
+if ($xmlContent === '' && $expansionXmlContent === '') {
+    redirectWithError('No plays found for the specified date range.');
+}
+
+// Merge the two XML contents if both are present
+if ($xmlContent !== '' && $expansionXmlContent !== '') {
+    $mainXml = simplexml_load_string($xmlContent);
+    $expansionXml = simplexml_load_string($expansionXmlContent);
+    if ($mainXml && $expansionXml) {
+        foreach ($expansionXml->play as $play) {
+            $newPlay = $mainXml->addChild('play');
+            foreach ($play->attributes() as $key => $value) {
+                $newPlay->addAttribute($key, $value);
+            }
+            foreach ($play->children() as $child) {
+                copyXmlNode($child, $newPlay);
+            }
+        }
+        $xmlContent = $mainXml->asXML();
     }
-
+} elseif ($expansionXmlContent) {
+    $xmlContent = $expansionXmlContent;
+}
 
 // Parse XML
 libxml_use_internal_errors(true);
