@@ -27,7 +27,8 @@ if (!validateDate($fromDate) || !validateDate($toDate)) {
  * Fetch all pages of plays from BoardGameGeek API for a user and date range
  * Returns the combined XML content as a string
  */
-function fetchAllPlaysXml($username, $fromDate, $toDate, $subtype, $authorizationToken) {
+function fetchAllPlaysXml($username, $fromDate, $toDate, $subtype, $authorizationToken)
+{
     $context = stream_context_create([
         'http' => [
             'method' => 'GET',
@@ -162,7 +163,8 @@ redirectWithSuccess($bbcode, $username, $fromDate, $toDate);
 /**
  * Copy XML node with all attributes and children
  */
-function copyXmlNode($source, $target) {
+function copyXmlNode($source, $target)
+{
     $newNode = $target->addChild($source->getName(), (string)$source);
 
     // Copy attributes
@@ -179,7 +181,8 @@ function copyXmlNode($source, $target) {
 /**
  * Aggregate plays by game objectId
  */
-function aggregatePlays($xml) {
+function aggregatePlays($xml)
+{
     $games = [];
     $processedCount = 0;
     $skippedCount = 0;
@@ -218,67 +221,110 @@ function aggregatePlays($xml) {
         }
     }
 
-    // Debug info could be logged here if needed
-    // error_log("Processed: $processedCount, Skipped: $skippedCount");
-
     return $games;
 }
 
 /**
  * Generate staircase from games
  * Ensures each step has a game with at least that many plays
+ * Updated: First determine the total length of the staircase, then select that many games starting from the game with the most plays
  */
-function generateStaircase($games) {
+function generateStaircase($games)
+{
     $staircase = [];
-    $usedGames = [];
+
+    $games = sortGamesByPlaysAscending($games);
+
+    $maxLength = getMaximumPossibleStaircaseLength($games);
+
+    // Now, select $maxLength games starting from the most played
+    $games = sortGamesByPlaysDescending($games);
+    $selectedGames = array_slice($games, 0, $maxLength);
     $step = 1;
 
-    // Sort games: first by play count (ascending), then by name (ascending)
-    usort($games, function($a, $b) {
-        if ($b['plays'] !== $a['plays']) {
-            return $a['plays'] - $b['plays'];
-        }
-        return strcmp($a['name'], $b['name']);
-    });
-
-    while (true) {
-        $found = false;
-
-        foreach ($games as $game) {
-            // Skip if already used
-            if (in_array($game['id'], $usedGames)) {
-                continue;
-            }
-
-            // Check if game has at least the required number of plays
-            if ($game['plays'] >= $step) {
-                $staircase[] = [
-                    'step' => $step,
-                    'id' => $game['id'],
-                    'name' => $game['name'],
-                    'plays' => $game['plays']
-                ];
-                $usedGames[] = $game['id'];
-                $found = true;
-                break;
-            }
-        }
-
-        // Stop if no game found for current step
-        if (!$found) {
+    $selectedGames = sortGamesByPlaysAscending($selectedGames);
+    foreach ($selectedGames as $game) {
+        $staircase[] = [
+            'step' => $step,
+            'id' => $game['id'],
+            'name' => $game['name'],
+            'plays' => $game['plays']
+        ];
+        $step++;
+        if (count($staircase) >= $maxLength) {
             break;
         }
-
-        $step++;
     }
 
     return $staircase;
 }
 
 /**
+ * @param $games
+ * @return int
+ */
+function getMaximumPossibleStaircaseLength($games): int
+{
+    $maxLength = 0;
+    $step = 1;
+    $gamesCopy = $games;
+    $usedIds = [];
+    while (true) {
+        $found = false;
+        foreach ($gamesCopy as $game) {
+            if (in_array($game['id'], $usedIds)) {
+                continue;
+            }
+            if ($game['plays'] >= $step) {
+                $usedIds[] = $game['id'];
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            break;
+        }
+        $maxLength++;
+        $step++;
+    }
+    return $maxLength;
+}
+
+/**
+ * @param $selectedGames
+ * @return mixed
+ */
+function sortGamesByPlaysAscending($selectedGames)
+{
+    usort($selectedGames, function ($a, $b) {
+        if ($b['plays'] !== $a['plays']) {
+            return $a['plays'] - $b['plays'];
+        }
+        return strcmp($a['name'], $b['name']);
+    });
+    return $selectedGames;
+}
+
+/**
+ * @param $games
+ * @return mixed
+ */
+function sortGamesByPlaysDescending($games)
+{
+    usort($games, function ($a, $b) {
+        if ($b['plays'] !== $a['plays']) {
+            return $b['plays'] - $a['plays'];
+        }
+        return strcmp($a['name'], $b['name']);
+    });
+    return $games;
+}
+
+/**
  * Generate BBCode from staircase
  */
-function generateBBCode($staircase, $emoji) {
+function generateBBCode($staircase, $emoji)
+{
     $lines = [];
 
     foreach ($staircase as $entry) {
@@ -296,7 +342,8 @@ function generateBBCode($staircase, $emoji) {
 /**
  * Validate date format (yyyy-mm-dd)
  */
-function validateDate($date) {
+function validateDate($date)
+{
     $d = DateTime::createFromFormat('Y-m-d', $date);
     return $d && $d->format('Y-m-d') === $date;
 }
@@ -304,7 +351,8 @@ function validateDate($date) {
 /**
  * Redirect with error message
  */
-function redirectWithError($message) {
+function redirectWithError($message)
+{
     $params = [
         'error' => $message,
         'username' => $_POST['username'] ?? '',
@@ -318,7 +366,8 @@ function redirectWithError($message) {
 /**
  * Redirect with success message and BBCode
  */
-function redirectWithSuccess($bbcode, $username, $fromDate, $toDate) {
+function redirectWithSuccess($bbcode, $username, $fromDate, $toDate)
+{
     $params = [
         'success' => '1',
         'bbcode' => $bbcode,
