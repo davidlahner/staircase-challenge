@@ -82,12 +82,9 @@ function copyXmlNode($source, $target)
 function aggregatePlays($xml)
 {
     $games = [];
-    $processedCount = 0;
-    $skippedCount = 0;
     foreach ($xml->play as $play) {
         $incomplete = (string)$play['incomplete'];
         if ($incomplete !== '0') {
-            $skippedCount++;
             continue;
         }
         if (isset($play->item)) {
@@ -95,7 +92,6 @@ function aggregatePlays($xml)
             $objectId = (string)$item['objectid'];
             $name = (string)$item['name'];
             if (empty($objectId) || empty($name)) {
-                $skippedCount++;
                 continue;
             }
             if (!isset($games[$objectId])) {
@@ -105,10 +101,8 @@ function aggregatePlays($xml)
                     'plays' => 0
                 ];
             }
-            $games[$objectId]['plays']++;
-            $processedCount++;
-        } else {
-            $skippedCount++;
+            $quantity = isset($play['quantity']) ? (int)$play['quantity'] : 1;
+            $games[$objectId]['plays'] += $quantity;
         }
     }
     return $games;
