@@ -17,8 +17,9 @@ A PHP web application that generates BBCode for BoardGameGeek staircase challeng
 
 ## Files
 
-- `index.php` - Main page with form and results display
-- `process.php` - Backend processing and API integration
+- `index.html` - Main page with form, aggregation logic and results display
+- `process.php` - BoardGameGeek API integration and pre-processing.
+- `functions.php` - Helper function.
 - `style.css` - Styling and responsive design
 
 ## Requirements
@@ -30,9 +31,10 @@ A PHP web application that generates BBCode for BoardGameGeek staircase challeng
 ## Installation
 
 1. Clone or download this repository
-2. Place files in your web server directory
-3. Ensure PHP is installed and configured
-4. Access `index.php` in your web browser
+2. Replace the authentication token in `process.php` with your own
+3. Place files in your web server directory
+4. Ensure PHP is installed and configured
+5. Access `index.html` in your web browser
 
 ## Usage
 

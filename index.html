@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BoardGameGeek Staircase Challenge</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h1>🎲 BoardGameGeek Staircase Challenge</h1>
+    <p class="description">
+        Generate BBCode for your staircase challenge based on your BoardGameGeek play history.<br/>
+        Created by <a href="https://boardgamegeek.com/profile/pratchettfan" target="_blank">Pratchettfan</a>
+    </p>
+
+    <!-- RESULT -->
+    <div id="result-container"></div>
+
+    <!-- FORM -->
+    <form id="challenge-form" class="challenge-form">
+        <div class="form-group">
+            <label for="username">BoardGameGeek Username:</label>
+            <input type="text" id="username" required>
+        </div>
+
+        <div class="form-group">
+            <label for="from_date">From Date:</label>
+            <input type="date" id="from_date" required>
+        </div>
+
+        <div class="form-group">
+            <label for="to_date">To Date:</label>
+            <input type="date" id="to_date" required>
+        </div>
+
+        <div class="form-group">
+            <label for="emoji">Staircase Emoji or BBCode:</label>
+            <input type="text" id="emoji" value="🎲" required>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submit-btn">
+            <span class="btn-text">Generate Staircase Challenge</span>
+            <span class="loading-spinner" style="display: none;">
+                <svg class="spinner" viewBox="0 0 50 50">
+                    <circle class="path" cx="25" cy="25" r="20"
+                            fill="none" stroke="#ffffff" stroke-width="5"
+                            stroke-linecap="round"
+                            stroke-dasharray="31.416"
+                            stroke-dashoffset="31.416">
+                        <animate attributeName="stroke-dasharray" dur="2s"
+                                 values="0 31.416;15.708 15.708;0 31.416"
+                                 repeatCount="indefinite"/>
+                        <animate attributeName="stroke-dashoffset" dur="2s"
+                                 values="0;-15.708;-31.416"
+                                 repeatCount="indefinite"/>
+                    </circle>
+                </svg>
+                Generating...
+            </span>
+        </button>
+    </form>
+
+    <div class="logo">
+        <a href="https://boardgamegeek.com/" target="_blank">
+            <img src="powered_by_bgg_logo.jpg" alt="Powered by BoardGameGeek"/>
+        </a>
+    </div>
+</div>
+
+<script>
+    /* =========================
+       API CALL
+    ========================= */
+    async function fetchPage(username, from, to, page, subtype) {
+        const res = await fetch(
+            `process.php?username=${encodeURIComponent(username)}&from=${from}&to=${to}&page=${page}&subtype=${subtype}`
+        );
+        return await res.json();
+    }
+
+    /* =========================
+       LOAD ALL DATA
+    ========================= */
+    async function loadAllData(username, from, to) {
+        let combined = {};
+
+        async function loadSubtype(subtype) {
+            let page = 1;
+
+            while (true) {
+                const json = await fetchPage(username, from, to, page, subtype);
+
+                if (json.error) throw new Error(json.error);
+
+                if(json.length === 0) break;
+
+                // merge results
+                for (const id in json) {
+                    if (!combined[id]) {
+                        combined[id] = {
+                            id,
+                            name: json[id].name,
+                            plays: 0
+                        };
+                    }
+                    combined[id].plays += json[id].plays;
+                }
+
+                page++;
+            }
+        }
+
+        await loadSubtype('boardgame');
+        await loadSubtype('boardgameexpansion');
+
+        return combined;
+    }
+
+    /* =========================
+       STAIRCASE LOGIC
+    ========================= */
+    function sortAsc(games) {
+        return games.sort((a, b) =>
+            a.plays !== b.plays ? a.plays - b.plays : a.name.localeCompare(b.name)
+        );
+    }
+
+    function sortDesc(games) {
+        return games.sort((a, b) =>
+            b.plays !== a.plays ? b.plays - a.plays : a.name.localeCompare(b.name)
+        );
+    }
+
+    function getMaxLength(games) {
+        let step = 1;
+        let used = new Set();
+        let max = 0;
+
+        while (true) {
+            let found = false;
+
+            for (let g of games) {
+                if (!used.has(g.id) && g.plays >= step) {
+                    used.add(g.id);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) break;
+
+            max++;
+            step++;
+        }
+
+        return max;
+    }
+
+    function generateStaircase(gamesObj) {
+        let games = Object.values(gamesObj);
+
+        let sortedAsc = sortAsc([...games]);
+        let maxLen = getMaxLength(sortedAsc);
+
+        let topGames = sortDesc([...games]).slice(0, maxLen);
+        topGames = sortAsc(topGames);
+
+        let step = 1;
+
+        return topGames.map(g => ({
+            step: step++,
+            id: g.id,
+            name: g.name,
+            plays: g.plays
+        }));
+    }
+
+    /* =========================
+       BBCODE
+    ========================= */
+    function generateBBCode(staircase, emoji) {
+        return staircase.map(entry => {
+            const step = String(entry.step).padStart(2, "0");
+            const dice = emoji.repeat(entry.step);
+            return `${step}. ${dice}[thing=${entry.id}][/thing] (${entry.plays})`;
+        }).join("\n");
+    }
+
+    /* =========================
+       RENDER
+    ========================= */
+    function renderResult(bbcode) {
+        const container = document.getElementById("result-container");
+
+        container.innerHTML = `
+        <div class="success-message">
+            <h2>Your Staircase Challenge BBCode:</h2>
+            <div class="bbcode-output">
+                <textarea id="bbcode-result" readonly>${bbcode}</textarea>
+                <button class="copy-btn">Copy to Clipboard</button>
+            </div>
+        </div>
+    `;
+
+        document.querySelector(".copy-btn").addEventListener("click", () => {
+            navigator.clipboard.writeText(bbcode);
+            const btn = document.querySelector(".copy-btn");
+            const old = btn.textContent;
+            btn.textContent = "Copied!";
+            setTimeout(() => btn.textContent = old, 2000);
+        });
+    }
+
+    /* =========================
+       FORM HANDLER
+    ========================= */
+    document.getElementById('challenge-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById('submit-btn');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const spinner = submitBtn.querySelector('.loading-spinner');
+
+        btnText.style.display = 'none';
+        spinner.style.display = 'inline-flex';
+        submitBtn.disabled = true;
+
+        try {
+            const username = document.getElementById("username").value;
+            const from = document.getElementById("from_date").value;
+            const to = document.getElementById("to_date").value;
+            const emoji = document.getElementById("emoji").value || "🎲";
+
+            const data = await loadAllData(username, from, to);
+            const staircase = generateStaircase(data);
+            const bbcode = generateBBCode(staircase, emoji);
+
+            renderResult(bbcode);
+
+        } catch (err) {
+            alert(err.message);
+        }
+
+        btnText.style.display = 'inline';
+        spinner.style.display = 'none';
+        submitBtn.disabled = false;
+    });
+</script>
+</body>
+</html>
