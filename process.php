@@ -37,7 +37,7 @@ $apiUrl = "https://boardgamegeek.com/xmlapi2/plays?username=" . urlencode($usern
 $xmlContent = @file_get_contents($apiUrl, false, $context);
 
 if ($xmlContent === false) {
-    echo json_encode(["error" => "Failed to fetch API"]);
+    echo json_encode(["error" => "Failed to load data from BGG API. Please try again later."]);
     exit;
 }
 
