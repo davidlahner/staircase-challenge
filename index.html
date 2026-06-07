@@ -69,6 +69,18 @@
 </div>
 
 <script>
+    function copyToClipboard() {
+        const textarea = document.getElementById('bbcode-result');
+        textarea.select();
+        document.execCommand('copy');
+
+        const btn = document.querySelector('.copy-btn');
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    }
     /* =========================
        API CALL
     ========================= */
@@ -198,7 +210,7 @@
             <h2>Your Staircase Challenge BBCode:</h2>
             <div class="bbcode-output">
                 <textarea id="bbcode-result" readonly>${bbcode}</textarea>
-                <button class="copy-btn">Copy to Clipboard</button>
+                <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
             </div>
         </div>
     `;
